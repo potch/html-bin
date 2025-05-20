@@ -1,0 +1,297 @@
+@property --resizer-split {
+  initial-value: 0.5;
+  inherits: false;
+  syntax: "<number>";
+}
+
+.bin,
+.bin *,
+.bin *:before,
+.bin *:after {
+  box-sizing: border-box;
+  --bg: #aaa;
+  --resizer-split: 0.5;
+  --margin: 2px;
+  --code-bg: #282a36;
+  --code-highlight: color-mix(in xyz, var(--code-bg), #cceeff 5%);
+  --code-text: #f8f8f2;
+  --code-comment: #a3b0d9;
+  --bin-width: 800px;
+  --bin-height: 512px;
+}
+
+.bin {
+  display: grid;
+  grid:
+    "tabs x menu" auto
+    "editor resizer preview" 1fr
+    "controls controls controls" auto
+    "footer footer footer" / calc(var(--resizer-split) * 100% - var(--margin))
+    calc(var(--margin) * 2)
+    1fr;
+  align-items: stretch;
+  margin: 5rem auto;
+  height: var(--bin-height);
+  width: var(--bin-width);
+  background: var(--bg);
+  padding: calc(var(--margin) * 2);
+  border-radius: 0.3rem;
+  box-shadow: 0 0.5rem 1rem #4444;
+  font-family: sans-serif;
+  transition: 0.1s --resizer-split ease-out;
+}
+
+.bin.bin--resizing {
+  transition: none;
+}
+
+.bin__editor {
+  overflow: auto;
+  grid-area: editor;
+  background: var(--code-bg);
+  color: var(--code-text);
+  display: none;
+  font-size: 13px;
+  border-width: 0 1px 1px;
+}
+
+.bin__editor--active {
+  display: block;
+}
+
+.bin__iconbutton {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 0.125rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1/1;
+  align-self: center;
+}
+.bin__iconbutton:hover {
+  background: #ddd;
+  box-shadow: 0 0 0 0.25rem #ddd;
+}
+
+.bin__editor__expand,
+.bin__preview__expand {
+  margin-inline: 0.5rem;
+}
+
+.bin__resizer {
+  grid-area: resizer;
+  cursor: ew-resize;
+  position: relative;
+}
+.bin__resizer:after {
+  content: "";
+  position: absolute;
+  display: block;
+  top: calc(50% - 0.5rem);
+  left: 1px;
+  height: 1rem;
+  width: 2px;
+  background: #444;
+}
+
+.bin__menu {
+  grid-area: menu;
+  font-size: 13px;
+  display: flex;
+  gap: var(--margin);
+  overflow: hidden;
+}
+.bin__preview__tab {
+  padding: 0.5rem 1rem 0.4rem;
+  background: #fff;
+  box-shadow: inset 0 2px 0 #cceeff;
+  border-radius: 0.25rem 0.25rem 0 0;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  margin-inline-end: auto;
+}
+
+.bin__preview {
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  grid-area: preview;
+  border: 0 none;
+}
+.bin--resizing .bin__preview {
+  pointer-events: none;
+}
+
+.bin__tabstrip {
+  grid-area: tabs;
+  display: flex;
+  background: var(--bg);
+  font-size: 13px;
+  overflow: hidden;
+}
+.bin__tabs {
+  display: flex;
+  gap: var(--margin);
+  margin-inline-end: auto;
+}
+.bin__tab {
+  border-bottom: var(--margin) solid var(--bg);
+  padding: 0.5rem 1rem 0.4rem;
+  background: var(--code-bg);
+  color: var(--code-comment);
+  border-radius: 0.25rem 0.25rem 0 0;
+  cursor: pointer;
+}
+.bin__tab:hover {
+  background: var(--code-highlight);
+}
+.bin__tab input {
+  width: 0;
+  height: 0;
+  position: absolute;
+  visibility: hidden;
+}
+.bin__tab--active,
+.bin__tab:has(input:checked) {
+  color: var(--code-text);
+  border-bottom-color: transparent;
+  box-shadow: inset 0 2px 0 #cceeff;
+}
+
+.bin .cm-editor {
+  height: 100%;
+  text-shadow: 0 1px rgba(0, 0, 0, 0.3);
+}
+.bin .cm-content {
+  caret-color: white !important;
+}
+.bin .cm-wrap {
+  height: 100%;
+}
+.bin .cm-scroller {
+  overflow: auto;
+  line-height: 1.5;
+}
+.bin .cm-gutters {
+  background: var(--code-bg);
+  color: #f8f8f2cc;
+  border: 0 none;
+}
+.bin .cm-activeLineGutter {
+  background: #cceeff44;
+}
+.bin .cm-selectionBackground {
+  background: #cceeff66 !important;
+}
+
+/**
+ * Dracula Theme originally by Zeno Rocha [@zenorocha]
+ * https://draculatheme.com/
+ *
+ * Ported for PrismJS by Albert Vallverdu [@byverdu]
+ * Adapted here for CodeMirror
+ */
+
+.tok-comment,
+.tok-prolog,
+.tok-doctype,
+.tok-cdata {
+  color: var(--code-comment);
+}
+
+.tok-punctuation {
+  color: #dbdbbd;
+}
+
+.namespace {
+  opacity: 0.7;
+}
+
+.tok-propertyName,
+.tok-constant,
+.tok-symbol,
+.tok-deleted {
+  color: #ff79c6;
+}
+
+.tok-bool,
+.tok-number,
+.tok-labelName {
+  color: #bd93f9;
+}
+
+.tok-selector,
+.tok-attr-name,
+.tok-string,
+.tok-char,
+.tok-builtin,
+.tok-tag,
+.tok-typeName,
+.tok-inserted {
+  color: #50fa7b;
+}
+
+.tok-operator,
+.tok-entity,
+.tok-url,
+.language-css .tok-string,
+.style .tok-string,
+.tok-variableName {
+  color: #f8f8f2;
+}
+
+.tok-atrule,
+.tok-attr-value,
+.tok-function,
+.tok-literal,
+.tok-className {
+  color: #f1fa8c;
+}
+
+.tok-keyword {
+  color: #8be9fd;
+}
+
+.tok-regex,
+.tok-important {
+  color: #ffb86c;
+}
+
+/*
+.tok-link
+.tok-heading
+.tok-emphasis
+.tok-strong
+.tok-keyword
+.tok-atom
+.tok-bool
+.tok-url
+.tok-labelName
+.tok-inserted
+.tok-deleted
+.tok-literal
+.tok-string
+.tok-number
+.tok-string2
+.tok-variableName
+.tok-variableName.tok-local
+.tok-variableName.tok-definition
+.tok-variableName2
+.tok-propertyName.tok-definition
+.tok-typeName
+.tok-namespace
+.tok-className
+.tok-macroName
+.tok-propertyName
+.tok-operator
+.tok-comment
+.tok-meta
+.tok-invalid
+.tok-punctuation
+*/

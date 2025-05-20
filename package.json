@@ -1,0 +1,32 @@
+{
+  "name": "html-bin",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rollup -c",
+    "start": "npm run build && tinyserve -p 8081 -w 'src index.html' -d . -x 'npm run build'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@codemirror/basic-setup": "^0.20.0",
+    "@codemirror/lang-css": "^6.3.1",
+    "@codemirror/lang-html": "^6.4.9",
+    "@codemirror/lang-javascript": "^6.2.4",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.36.8",
+    "@potch/minifw": "^3.0.0",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@uiw/codemirror-theme-dracula": "^4.23.12",
+    "codemirror": "^6.0.1"
+  },
+  "devDependencies": {
+    "@potch/tinyserve": "^1.5.1",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "rollup": "^4.40.2"
+  }
+}
