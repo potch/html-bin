@@ -224,10 +224,9 @@ const createBin = ({
   );
 
   effect(() => {
-    console.log(splitOverride.value === 1 ? "⬅️" : "↔️");
     previewExpandButton.style.order = splitOverride.value === 0 ? -1 : "unset";
-    previewExpandButton.innerText = splitOverride.value === 0 ? "➡️" : "↔️";
-    editorExpandButton.innerText = splitOverride.value === 1 ? "⬅️" : "↔️";
+    previewExpandButton.innerText = splitOverride.value === 0 ? "⏭️" : "↔️";
+    editorExpandButton.innerText = splitOverride.value === 1 ? "⏮️" : "↔️";
   });
 
   const binEl = dom(
@@ -260,7 +259,8 @@ const createBin = ({
     cssEditorEl,
     htmlEditorEl,
     resizerEl,
-    previewEl
+    previewEl,
+    dom("div", { className: "bin__controls" })
   );
 
   if (width) binEl.style.setProperty("--bin-width", width);
@@ -269,17 +269,26 @@ const createBin = ({
   // resizing
   const resizing = signal(false);
 
+  const ilerp = (a, b, i) => (i - a) / (b - a);
+  const clamp = (a, b, n) => Math.max(a, Math.min(n, b));
+
   const updateResize = (e) => {
     if (resizing.value) {
-      let pos = e.clientX - getLeft(binEl);
-      editorSplit.value = pos / binEl.offsetWidth;
+      let pos = e.clientX - resizerEl.offsetWidth / 2 - getLeft(binEl);
+      editorSplit.value = clamp(
+        0.2,
+        0.8,
+        ilerp(10, binEl.offsetWidth - 10, pos)
+      );
     }
   };
+
+  effect(() => console.log(editorSplit.value, splitOverride.value));
 
   const startResize = (e) => {
     resizing.value = true;
     updateResize(e);
-    splitOverride.value = false;
+    splitOverride.value = null;
   };
 
   const endResize = (e) => {

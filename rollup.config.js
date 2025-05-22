@@ -8,5 +8,5 @@ export default {
     dir: "build",
     format: "es",
   },
-  plugins: [nodeResolve(), terser()],
+  plugins: [nodeResolve()],
 };
