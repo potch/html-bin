@@ -14,6 +14,8 @@
 .bin {
   height: var(--bin-height);
   width: var(--bin-width);
+  max-height: 90vh;
+  max-height: 90svh;
 
   position: relative;
   container-type: inline-size;
@@ -120,16 +122,19 @@
   gap: var(--margin);
   overflow: hidden;
 }
-.bin__preview__tab {
+.bin__preview__tab,
+.bin__mini_preview_tab {
   padding: 0.5rem 1rem 0.5rem;
   background: #fff;
-  box-shadow: inset 0 2px 0 #cceeff;
   border-radius: 0.25rem 0.25rem 0 0;
   display: flex;
   gap: 0.5rem;
   align-items: center;
   justify-content: center;
   margin-inline-end: auto;
+}
+.bin__mini_preview_tab {
+  display: none;
 }
 
 .bin__preview {
@@ -178,12 +183,15 @@
   border-bottom-color: transparent;
 }
 
-.bin .bin__controls {
+.bin__controls {
   grid-area: controls;
   padding: 1rem;
 }
+.bin__controls:empty {
+  display: none;
+}
 
-@container bin (max-width: 700px) {
+.bin--mini-mode {
   .bin__widget {
     grid:
       "tabs" auto
@@ -195,6 +203,14 @@
     grid-area: editor;
     display: none;
   }
+  .bin__preview.bin__editor--active {
+    display: block;
+  }
+  .bin__mini_preview_tab {
+    display: block;
+  }
+  .bin__preview__expand,
+  .bin__editor__expand,
   .bin__resizer,
   .bin__menu {
     display: none;

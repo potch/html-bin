@@ -171,17 +171,26 @@ export const createBin = ({
     className: "bin__editor bin__editor--html",
   });
 
+  const previewLeftTabInput = dom("input", {
+    type: "radio",
+    name: "tab",
+    value: "preview",
+    disabled: true,
+  });
   const previewLeftTab = dom(
     "label",
-    { className: "bin__tab" },
-    dom("input", {
-      type: "radio",
-      name: "tab",
-      value: "preview",
-      checked: true,
-    }),
+    { className: "bin__tab bin__preview_tab bin__mini_preview_tab" },
+    previewLeftTabInput,
     "preview"
   );
+
+  effect(() => {
+    if (isMiniMode.value) {
+      previewLeftTabInput.removeAttribute("disabled");
+    } else {
+      previewLeftTabInput.setAttribute("disabled", true);
+    }
+  });
 
   const tabsForm = dom(
     "form",
@@ -348,12 +357,22 @@ export const createBin = ({
 
   // editor tabs
 
-  const activeEditor = computed((last) => {
+  const activeEditor = computed(() => {
     let t = activeTab.value;
     if (t === "js") return jsEditorEl;
     if (t === "css") return cssEditorEl;
     if (t === "html") return htmlEditorEl;
+    if (t === "preview") return previewEl;
     return null;
+  });
+
+  effect(() => {
+    const t = activeTab.value;
+    const m = isMiniMode.value;
+    if (t === "preview" && !m) {
+      tabsForm.elements.tab.value = "js";
+      activeTab.value = "js";
+    }
   });
 
   effect(() => {
