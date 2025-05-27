@@ -16,22 +16,34 @@
   --code-highlight: color-mix(in xyz, var(--code-bg), #cceeff 5%);
   --code-text: #f8f8f2;
   --code-comment: #a3b0d9;
-  --bin-width: 800px;
+  --bin-width: 100%;
   --bin-height: 512px;
 }
 
 .bin {
+  height: var(--bin-height);
+  width: var(--bin-width);
+
+  position: relative;
+  container-type: inline-size;
+  container-name: bin;
+}
+
+.bin__widget {
+  width: 100%;
+  height: 100%;
   display: grid;
   grid:
     "tabs x menu" auto
     "editor resizer preview" 1fr
     "controls controls controls" auto
-    "footer footer footer" / calc(
+    "footer footer footer" auto / calc(
       var(--resizer-split) * (100% - var(--margin) * 2)
     )
     calc(var(--margin) * 2)
     1fr;
   align-items: stretch;
+
   margin: 5rem auto;
   height: var(--bin-height);
   width: var(--bin-width);
@@ -168,6 +180,24 @@
 .bin .bin__controls {
   grid-area: controls;
   padding: 1rem;
+}
+
+@container bin (max-width: 700px) {
+  .bin__widget {
+    grid:
+      "tabs" auto
+      "editor" 1fr
+      "controls" auto
+      "footer" auto / 1fr;
+  }
+  .bin__preview {
+    grid-area: editor;
+    display: none;
+  }
+  .bin__resizer,
+  .bin__menu {
+    display: none;
+  }
 }
 
 .bin .cm-editor {

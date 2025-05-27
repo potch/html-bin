@@ -4,7 +4,31 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
-    <script defer type="module" src="/build/index.js"></script>
+    <script defer type="module">
+      import { createBin } from "/build/index.js";
+      createBin({
+        container: document.body,
+        sources: {
+          js: `// js goes here
+const el = document.querySelector('h1');
+
+function update(time) {
+  el.innerText = time;
+}
+
+setInterval(() => {
+  update(Date.now());
+}, 1000)`,
+          css: `h1, .cool, #foo {
+  color: #fc0;
+  background: hsla(120, 50%, 75%, 0.3);
+}`,
+          html: "<h1>HI</h1>\n",
+        },
+        split: 0.6,
+        height: "512px",
+      });
+    </script>
     <link rel="stylesheet" href="src/style.css" />
   </head>
   <body></body>

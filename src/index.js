@@ -67,14 +67,22 @@ const debounceComputed = (s, ms) => {
   return out;
 };
 
-const createBin = ({
+export const createBin = ({
   container,
   sources: rawSources,
   split,
   width,
   height,
 }) => {
-  const editorSplit = signal(split ?? 0.5);
+  const editorSplit = signal(parseFloat(split) || 0.5);
+
+  const actualWidth = signal(0);
+  const widthObserver = new ResizeObserver((entries) => {
+    if (entries[0]) {
+      actualWidth.value = entries[0].contentRect.width;
+    }
+  });
+  const isMiniMode = computed(() => actualWidth.value <= 700);
 
   const update = (s) => (v) => {
     if (v.docChanged) {
@@ -163,6 +171,18 @@ const createBin = ({
     className: "bin__editor bin__editor--html",
   });
 
+  const previewLeftTab = dom(
+    "label",
+    { className: "bin__tab" },
+    dom("input", {
+      type: "radio",
+      name: "tab",
+      value: "preview",
+      checked: true,
+    }),
+    "preview"
+  );
+
   const tabsForm = dom(
     "form",
     {
@@ -187,7 +207,8 @@ const createBin = ({
       { className: "bin__tab" },
       dom("input", { type: "radio", name: "tab", value: "js", checked: true }),
       "javascript"
-    )
+    ),
+    previewLeftTab
   );
 
   const resizerEl = dom("div", {
@@ -232,39 +253,46 @@ const createBin = ({
   const binEl = dom(
     "div",
     { className: "bin" },
-    dom("div", { className: "bin__tabstrip" }, tabsForm, editorExpandButton),
     dom(
       "div",
-      { className: "bin__menu" },
+      { className: "bin__widget" },
+      dom("div", { className: "bin__tabstrip" }, tabsForm, editorExpandButton),
       dom(
         "div",
-        { className: "bin__preview__tab" },
-        "preview",
+        { className: "bin__menu" },
         dom(
-          "button",
-          {
-            className: "bin__preview__refresh bin__iconbutton",
-            title: "reload the preview",
-            "aria-label": "reload the preview",
-            onclick: () => {
-              previewEl.contentWindow.location.reload();
+          "div",
+          { className: "bin__preview__tab" },
+          "preview",
+          dom(
+            "button",
+            {
+              className: "bin__preview__refresh bin__iconbutton",
+              title: "reload the preview",
+              "aria-label": "reload the preview",
+              onclick: () => {
+                previewEl.contentWindow.location.reload();
+              },
             },
-          },
-          "🔁"
-        )
+            "🔁"
+          )
+        ),
+        previewExpandButton
       ),
-      previewExpandButton
-    ),
-    jsEditorEl,
-    cssEditorEl,
-    htmlEditorEl,
-    resizerEl,
-    previewEl,
-    dom("div", { className: "bin__controls" })
+      jsEditorEl,
+      cssEditorEl,
+      htmlEditorEl,
+      resizerEl,
+      previewEl,
+      dom("div", { className: "bin__controls" })
+    )
   );
 
   if (width) binEl.style.setProperty("--bin-width", width);
   if (height) binEl.style.setProperty("--bin-height", height);
+  effect(() => {
+    binEl.classList.toggle("bin--mini-mode", isMiniMode.value);
+  });
 
   // resizing
   const resizing = signal(false);
@@ -311,6 +339,9 @@ const createBin = ({
   effect(() => {
     binEl.style.setProperty(
       "--resizer-split",
+      splitOverride.value !== null ? splitOverride.value : editorSplit.value
+    );
+    console.log(
       splitOverride.value !== null ? splitOverride.value : editorSplit.value
     );
   });
@@ -367,28 +398,10 @@ const createBin = ({
   };
 
   container.append(binEl);
+  widthObserver.observe(binEl);
+
+  return {
+    editors,
+    activeTab,
+  };
 };
-
-createBin({
-  container: document.body,
-  sources: {
-    js: `// js goes here
-const el = document.querySelector('h1');
-
-function update(time) {
-  el.innerText = time;
-}
-  
-setInterval(() => {
-  update(Date.now());
-}, 1000)`,
-    css: `h1, .cool, #foo {
-  color: #fc0;
-  background: hsla(120, 50%, 75%, 0.3);
-}`,
-    html: "<h1>HI</h1>\n",
-  },
-  split: 0.6,
-  width: "1024px",
-  height: "512px",
-});

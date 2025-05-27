@@ -1,5 +1,5 @@
 {
-  "name": "html-bin",
+  "name": "@potch/html-bin",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
