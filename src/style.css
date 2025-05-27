@@ -9,15 +9,6 @@
 .bin *:before,
 .bin *:after {
   box-sizing: border-box;
-  --bg: #aaa;
-  --resizer-split: 0.5;
-  --margin: 2px;
-  --code-bg: #282a36;
-  --code-highlight: color-mix(in xyz, var(--code-bg), #cceeff 5%);
-  --code-text: #f8f8f2;
-  --code-comment: #a3b0d9;
-  --bin-width: 100%;
-  --bin-height: 512px;
 }
 
 .bin {
@@ -27,6 +18,16 @@
   position: relative;
   container-type: inline-size;
   container-name: bin;
+
+  --bg: #aaa;
+  --resizer-split: 0.5;
+  --margin: 2px;
+  --code-bg: #282a36;
+  --code-highlight: color-mix(in xyz, var(--code-bg), #cceeff 5%);
+  --code-text: #f8f8f2;
+  --code-comment: #a3b0d9;
+  --bin-width: 100%;
+  --bin-height: 512px;
 }
 
 .bin__widget {
