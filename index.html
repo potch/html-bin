@@ -6,7 +6,7 @@
     <title>Document</title>
     <script defer type="module">
       import { createBin } from "/build/index.js";
-      createBin({
+      window.bin = createBin({
         container: document.body,
         sources: {
           js: `// js goes here

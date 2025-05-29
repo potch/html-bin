@@ -58,7 +58,7 @@
   transition: 0.1s --resizer-split ease-out;
 }
 
-.bin.bin--resizing {
+.bin--resizing .bin__widget {
   transition: none;
 }
 
@@ -122,20 +122,6 @@
   gap: var(--margin);
   overflow: hidden;
 }
-.bin__preview__tab,
-.bin__mini_preview_tab {
-  padding: 0.5rem 1rem 0.5rem;
-  background: #fff;
-  border-radius: 0.25rem 0.25rem 0 0;
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  justify-content: center;
-  margin-inline-end: auto;
-}
-.bin__mini_preview_tab {
-  display: none;
-}
 
 .bin__preview {
   width: 100%;
@@ -163,13 +149,19 @@
 .bin__tab {
   border-bottom: var(--margin) solid var(--bg);
   padding: 0.5rem 1rem 0.5rem;
-  background: var(--code-bg);
-  color: var(--code-comment);
   border-radius: 0.25rem 0.25rem 0 0;
   cursor: pointer;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
 }
-.bin__tab:hover {
-  background: var(--code-highlight);
+.bin__tabstrip .bin__tab:hover {
+  text-decoration: underline;
+}
+.bin__editor_tab {
+  background: var(--code-bg);
+  color: var(--code-comment);
 }
 .bin__tab input {
   width: 0;
@@ -179,8 +171,26 @@
 }
 .bin__tab--active,
 .bin__tab:has(input:checked) {
-  color: var(--code-text);
   border-bottom-color: transparent;
+}
+
+.bin__editor_tab:has(input:checked) {
+  color: var(--code-text);
+}
+.bin__editor_tab:hover {
+  background: var(--code-highlight);
+}
+
+.bin__preview_tab,
+.bin__mini_preview_tab {
+  background: #fff;
+}
+.bin__tabstrip .bin__preview_tab:hover {
+  background: var(--code-text);
+}
+
+.bin__mini_preview_tab {
+  display: none;
 }
 
 .bin__controls {
@@ -207,7 +217,7 @@
     display: block;
   }
   .bin__mini_preview_tab {
-    display: block;
+    display: flex;
   }
   .bin__preview__expand,
   .bin__editor__expand,

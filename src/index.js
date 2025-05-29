@@ -47,7 +47,13 @@ import { html } from "@codemirror/lang-html";
 import { css } from "@codemirror/lang-css";
 
 import { classHighlighter } from "@lezer/highlight";
-import { dom, signal, computed, effect, on } from "@potch/minifw";
+import {
+  dom as _,
+  signal,
+  computed,
+  effect as _effect,
+  on as _on,
+} from "@potch/minifw";
 
 const getLeft = (el) => (el ? el.offsetLeft + getLeft(el.offsetParent) : 0);
 const getTop = (el) => (el ? el.offsetTop + getTop(el.offsetParent) : 0);
@@ -67,6 +73,8 @@ const debounceComputed = (s, ms) => {
   return out;
 };
 
+const maybe = (condition, value) => (condition ? value : "");
+
 export const createBin = ({
   container,
   sources: rawSources,
@@ -76,20 +84,26 @@ export const createBin = ({
 }) => {
   const editorSplit = signal(parseFloat(split) || 0.5);
 
+  const teardownFns = [];
+  const effect = (...args) => {
+    teardownFns.push(_effect(...args));
+  };
+  const on = (...args) => {
+    teardownFns.push(_on(...args));
+  };
+
   const actualWidth = signal(0);
   const widthObserver = new ResizeObserver((entries) => {
     if (entries[0]) {
       actualWidth.value = entries[0].contentRect.width;
     }
   });
-  const isMiniMode = computed(() => actualWidth.value <= 700);
 
-  const update = (s) => (v) => {
-    if (v.docChanged) {
-      // how to get the full text content from the editor
-      s.value = v.state.doc.toString();
-    }
-  };
+  const isMiniMode = computed(() => actualWidth.value <= 700);
+  const resizing = signal(false);
+  const splitOverride = signal(null);
+
+  const activeTab = signal("js");
 
   const sources = {
     js: signal(rawSources.js ?? "// js goes here"),
@@ -155,156 +169,167 @@ export const createBin = ({
     );
   });
 
-  const previewEl = dom("iframe", { className: "bin__preview" });
-
-  effect(() => {
-    previewEl.src = previewURL.value;
-  });
-
   // editor tabs
 
-  const activeTab = signal("js");
-
-  const jsEditorEl = dom("div", { className: "bin__editor bin__editor--js" });
-  const cssEditorEl = dom("div", { className: "bin__editor bin__editor--css" });
-  const htmlEditorEl = dom("div", {
-    className: "bin__editor bin__editor--html",
+  const jsEditorEl = _("div", {
+    className: computed(
+      () =>
+        "bin__editor bin__editor--js" +
+        maybe(activeTab.value === "js", " bin__editor--active")
+    ),
+  });
+  const cssEditorEl = _("div", {
+    className: computed(
+      () =>
+        "bin__editor bin__editor--css" +
+        maybe(activeTab.value === "css", " bin__editor--active")
+    ),
+  });
+  const htmlEditorEl = _("div", {
+    className: computed(
+      () =>
+        "bin__editor bin__editor--html" +
+        maybe(activeTab.value === "html", " bin__editor--active")
+    ),
   });
 
-  const previewLeftTabInput = dom("input", {
-    type: "radio",
-    name: "tab",
-    value: "preview",
-    disabled: true,
-  });
-  const previewLeftTab = dom(
-    "label",
-    { className: "bin__tab bin__preview_tab bin__mini_preview_tab" },
-    previewLeftTabInput,
-    "preview"
-  );
-
-  effect(() => {
-    if (isMiniMode.value) {
-      previewLeftTabInput.removeAttribute("disabled");
-    } else {
-      previewLeftTabInput.setAttribute("disabled", true);
-    }
-  });
-
-  const tabsForm = dom(
+  const tabsForm = _(
     "form",
     {
       className: "bin__tabs",
       onsubmit: (e) => e.preventDefault(),
       oninput: (e) => (activeTab.value = tabsForm.elements.tab.value),
     },
-    dom(
+    _(
       "label",
-      { className: "bin__tab" },
-      dom("input", { type: "radio", name: "tab", value: "html" }),
+      { className: "bin__tab bin__editor_tab" },
+      _("input", { type: "radio", name: "tab", value: "html" }),
       "html"
     ),
-    dom(
+    _(
       "label",
-      { className: "bin__tab" },
-      dom("input", { type: "radio", name: "tab", value: "css" }),
+      { className: "bin__tab bin__editor_tab" },
+      _("input", { type: "radio", name: "tab", value: "css" }),
       "css"
     ),
-    dom(
+    _(
       "label",
-      { className: "bin__tab" },
-      dom("input", { type: "radio", name: "tab", value: "js", checked: true }),
+      { className: "bin__tab bin__editor_tab" },
+      _("input", { type: "radio", name: "tab", value: "js", checked: true }),
       "javascript"
     ),
-    previewLeftTab
+    _(
+      "label",
+      { className: "bin__tab bin__preview_tab bin__mini_preview_tab" },
+      _("input", {
+        type: "radio",
+        name: "tab",
+        value: "preview",
+        disabled: computed(() => (isMiniMode.value ? false : true)),
+      }),
+      "preview",
+      _(
+        "button",
+        {
+          className: "bin__preview__refresh bin__iconbutton",
+          title: "reload the preview",
+          "aria-label": "reload the preview",
+          onclick: () => {
+            previewEl.value?.contentWindow.location.reload();
+          },
+        },
+        "🔁"
+      )
+    )
   );
 
-  const resizerEl = dom("div", {
+  const resizerEl = _("div", {
     className: "bin__resizer",
   });
 
-  const splitOverride = signal(null);
+  let previewEl = signal();
 
-  const editorExpandButton = dom(
-    "button",
-    {
-      className: "bin__editor__expand bin__iconbutton",
-      title: "toggle showing only the editor",
-      "aria-label": "toggle showing only the editor",
-      onclick: () => {
-        splitOverride.value = splitOverride.value === 1 ? null : 1;
-      },
-    },
-    "↔️"
-  );
-
-  const previewExpandButton = dom(
-    "button",
-    {
-      className: "bin__preview__expand bin__iconbutton",
-      title: "toggle showing only the preview",
-      "aria-label": "toggle showing only the preview",
-
-      onclick: () => {
-        splitOverride.value = splitOverride.value === 0 ? null : 0;
-      },
-    },
-    "↔️"
-  );
-
-  effect(() => {
-    previewExpandButton.style.order = splitOverride.value === 0 ? -1 : "unset";
-    previewExpandButton.innerText = splitOverride.value === 0 ? "⏭️" : "↔️";
-    editorExpandButton.innerText = splitOverride.value === 1 ? "⏮️" : "↔️";
-  });
-
-  const binEl = dom(
+  const binEl = _(
     "div",
-    { className: "bin" },
-    dom(
+    {
+      className: computed(
+        () =>
+          "bin" +
+          maybe(isMiniMode.value, " bin--mini-mode") +
+          maybe(resizing.value, " bin--resizing")
+      ),
+    },
+    _(
       "div",
       { className: "bin__widget" },
-      dom("div", { className: "bin__tabstrip" }, tabsForm, editorExpandButton),
-      dom(
+      _(
+        "div",
+        { className: "bin__tabstrip" },
+        tabsForm,
+        _("button", {
+          className: "bin__editor__expand bin__iconbutton",
+          title: "toggle showing only the editor",
+          "aria-label": "toggle showing only the editor",
+          innerText: computed(() => (splitOverride.value === 1 ? "⏮️" : "↔️")),
+          onclick: () => {
+            splitOverride.value = splitOverride.value === 1 ? null : 1;
+          },
+        })
+      ),
+      _(
         "div",
         { className: "bin__menu" },
-        dom(
+        _(
           "div",
-          { className: "bin__preview__tab" },
+          { className: "bin__tab bin__preview_tab bin__tab--active" },
           "preview",
-          dom(
+          _(
             "button",
             {
               className: "bin__preview__refresh bin__iconbutton",
               title: "reload the preview",
               "aria-label": "reload the preview",
               onclick: () => {
-                previewEl.contentWindow.location.reload();
+                previewEl.value?.contentWindow.location.reload();
               },
             },
             "🔁"
           )
         ),
-        previewExpandButton
+        _("button", {
+          className: "bin__preview__expand bin__iconbutton",
+          title: "toggle showing only the preview",
+          "aria-label": "toggle showing only the preview",
+          innerText: computed(() => (splitOverride.value === 0 ? "⏭️" : "↔️")),
+          style: computed(() => ({
+            order: splitOverride.value === 0 ? -1 : "unset",
+          })),
+          onclick: () => {
+            splitOverride.value = splitOverride.value === 0 ? null : 0;
+          },
+        })
       ),
       jsEditorEl,
       cssEditorEl,
       htmlEditorEl,
       resizerEl,
-      previewEl,
-      dom("div", { className: "bin__controls" })
+      _("iframe", {
+        ref: previewEl,
+        className: computed(
+          () =>
+            "bin__preview" +
+            maybe(activeTab.value === "preview", " bin__editor--active")
+        ),
+        src: previewURL,
+      }),
+      _("div", { className: "bin__controls" })
     )
   );
 
   if (width) binEl.style.setProperty("--bin-width", width);
   if (height) binEl.style.setProperty("--bin-height", height);
-  effect(() => {
-    binEl.classList.toggle("bin--mini-mode", isMiniMode.value);
-  });
 
   // resizing
-  const resizing = signal(false);
 
   const ilerp = (a, b, i) => (i - a) / (b - a);
   const clamp = (a, b, n) => Math.max(a, Math.min(n, b));
@@ -320,8 +345,6 @@ export const createBin = ({
     }
   };
 
-  effect(() => console.log(editorSplit.value, splitOverride.value));
-
   const startResize = (e) => {
     resizing.value = true;
     updateResize(e);
@@ -332,10 +355,6 @@ export const createBin = ({
     resizing.value = false;
     updateResize(e);
   };
-
-  effect(() => {
-    binEl.classList.toggle("bin--resizing", resizing.value);
-  });
 
   on(resizerEl, "mousedown", startResize);
   on(document.body, "mouseup", endResize);
@@ -350,21 +369,9 @@ export const createBin = ({
       "--resizer-split",
       splitOverride.value !== null ? splitOverride.value : editorSplit.value
     );
-    console.log(
-      splitOverride.value !== null ? splitOverride.value : editorSplit.value
-    );
   });
 
   // editor tabs
-
-  const activeEditor = computed(() => {
-    let t = activeTab.value;
-    if (t === "js") return jsEditorEl;
-    if (t === "css") return cssEditorEl;
-    if (t === "html") return htmlEditorEl;
-    if (t === "preview") return previewEl;
-    return null;
-  });
 
   effect(() => {
     const t = activeTab.value;
@@ -375,14 +382,15 @@ export const createBin = ({
     }
   });
 
-  effect(() => {
-    binEl
-      .querySelector(".bin__editor--active")
-      ?.classList.remove("bin__editor--active");
-    activeEditor.value?.classList.add("bin__editor--active");
-  });
-
   // create CM editors
+
+  const update = (s) => (v) => {
+    if (v.docChanged) {
+      // how to get the full text content from the editor
+      s.value = v.state.doc.toString();
+    }
+  };
+
   const editors = {
     js: new EditorView({
       doc: sources.js.value,
@@ -416,11 +424,29 @@ export const createBin = ({
     }),
   };
 
+  // mount bin and start
   container.append(binEl);
   widthObserver.observe(binEl);
+
+  // destroy / teardown
+  const findEffects = (node) => {
+    if (node._effects) {
+      teardownFns.push(...node._effects);
+    }
+    for (let n of node?.childNodes) findEffects(n);
+  };
+  findEffects(binEl);
+
+  const teardown = () => {
+    while (teardownFns.length) {
+      teardownFns.pop()();
+    }
+    widthObserver.disconnect();
+  };
 
   return {
     editors,
     activeTab,
+    teardown,
   };
 };
