@@ -55,6 +55,10 @@ import {
   on as _on,
 } from "@potch/minifw";
 
+import styles from "./style.css";
+
+let injectedStyles = null;
+
 const getLeft = (el) => (el ? el.offsetLeft + getLeft(el.offsetParent) : 0);
 const getTop = (el) => (el ? el.offsetTop + getTop(el.offsetParent) : 0);
 
@@ -82,6 +86,11 @@ export const createBin = ({
   width,
   height,
 }) => {
+  if (!injectedStyles) {
+    injectedStyles = _("style", {}, styles);
+    document.head.append(injectedStyles);
+  }
+
   const editorSplit = signal(parseFloat(split) || 0.5);
 
   const teardownFns = [];

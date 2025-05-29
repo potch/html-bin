@@ -325,36 +325,3 @@
 .tok-important {
   color: #ffb86c;
 }
-
-/*
-.tok-link
-.tok-heading
-.tok-emphasis
-.tok-strong
-.tok-keyword
-.tok-atom
-.tok-bool
-.tok-url
-.tok-labelName
-.tok-inserted
-.tok-deleted
-.tok-literal
-.tok-string
-.tok-number
-.tok-string2
-.tok-variableName
-.tok-variableName.tok-local
-.tok-variableName.tok-definition
-.tok-variableName2
-.tok-propertyName.tok-definition
-.tok-typeName
-.tok-namespace
-.tok-className
-.tok-macroName
-.tok-propertyName
-.tok-operator
-.tok-comment
-.tok-meta
-.tok-invalid
-.tok-punctuation
-*/

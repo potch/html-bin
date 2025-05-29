@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
     <script defer type="module">
-      import { createBin } from "/build/index.js";
+      import { createBin } from "/build/index.min.js";
       window.bin = createBin({
         container: document.body,
         sources: {
@@ -29,7 +29,6 @@ setInterval(() => {
         height: "512px",
       });
     </script>
-    <link rel="stylesheet" href="src/style.css" />
   </head>
   <body></body>
 </html>
