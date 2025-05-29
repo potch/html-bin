@@ -434,8 +434,11 @@ export const createBin = ({
   };
 
   // mount bin and start
-  container.append(binEl);
-  widthObserver.observe(binEl);
+  const start = () => widthObserver.observe(binEl);
+  if (container) {
+    container.append(binEl);
+    start();
+  }
 
   // destroy / teardown
   const findEffects = (node) => {
@@ -454,8 +457,10 @@ export const createBin = ({
   };
 
   return {
+    el: binEl,
     editors,
     activeTab,
+    start,
     teardown,
   };
 };
