@@ -7,7 +7,7 @@
     <script defer type="module">
       import { createBin } from "/build/index.min.js";
       window.bin = createBin({
-        container: document.body,
+        container: document.querySelector("#mount"),
         sources: {
           js: `// js goes here
 const el = document.querySelector('h1');
@@ -30,5 +30,8 @@ setInterval(() => {
       });
     </script>
   </head>
-  <body></body>
+  <body>
+    <div id="mount"></div>
+    <p>Hello World</p>
+  </body>
 </html>

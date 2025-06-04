@@ -12,6 +12,9 @@
 }
 
 .bin {
+  --bin-width: 100%;
+  --bin-height: 512px;
+
   height: var(--bin-height);
   width: var(--bin-width);
   max-height: 90vh;
@@ -28,13 +31,13 @@
   --code-highlight: color-mix(in xyz, var(--code-bg), #cceeff 5%);
   --code-text: #f8f8f2;
   --code-comment: #a3b0d9;
-  --bin-width: 100%;
-  --bin-height: 512px;
 }
 
 .bin__widget {
+  position: absolute;
   width: 100%;
   height: 100%;
+
   display: grid;
   grid:
     "tabs x menu" auto
@@ -47,7 +50,7 @@
     1fr;
   align-items: stretch;
 
-  margin: 5rem auto;
+  overflow: hidden;
   height: var(--bin-height);
   width: var(--bin-width);
   background: var(--bg);
