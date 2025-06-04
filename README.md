@@ -2,9 +2,17 @@
 
 a codebin widget for embeddable editable live demos built on top of [CodeMirror](https://codemirror.net/)
 
+## Usage
+
+`npm i @potch/html-bin`
+
+`import { createBin } from "@potch/html-bin";`
+
+`import { createBin } from "https://unpkg.com/@potch/html-bin/build/index.min.js";`
+
 ## API
 
-### `createBin`
+### `createBin(options)`
 
 create a bin component.
 
