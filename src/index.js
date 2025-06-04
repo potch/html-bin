@@ -4,7 +4,6 @@ import {
   highlightSpecialChars,
   drawSelection,
   dropCursor,
-  crosshairCursor,
   highlightActiveLine,
   keymap,
   EditorView,
@@ -16,8 +15,11 @@ import {
   bracketMatching,
 } from "@codemirror/language";
 import { history, defaultKeymap, historyKeymap } from "@codemirror/commands";
-import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
+import { javascript } from "@codemirror/lang-javascript";
+import { html } from "@codemirror/lang-html";
+import { css } from "@codemirror/lang-css";
 
+// CodeMirror config for tab editors
 const cmSetup = [
   lineNumbers(),
   highlightActiveLineGutter(),
@@ -28,9 +30,7 @@ const cmSetup = [
   EditorState.allowMultipleSelections.of(true),
   indentOnInput(),
   bracketMatching(),
-  crosshairCursor(),
   highlightActiveLine(),
-  highlightSelectionMatches(),
   EditorView.theme(
     {
       ".cm-content": {
@@ -39,12 +39,8 @@ const cmSetup = [
     },
     { dark: true }
   ),
-  keymap.of([...defaultKeymap, ...searchKeymap, ...historyKeymap]),
+  keymap.of([...defaultKeymap, ...historyKeymap]),
 ];
-
-import { javascript } from "@codemirror/lang-javascript";
-import { html } from "@codemirror/lang-html";
-import { css } from "@codemirror/lang-css";
 
 import { classHighlighter } from "@lezer/highlight";
 import {
@@ -53,6 +49,7 @@ import {
   computed,
   effect as _effect,
   on as _on,
+  onEffect,
 } from "@potch/minifw";
 
 import styles from "./style.css";
@@ -79,6 +76,61 @@ const debounceComputed = (s, ms) => {
 
 const maybe = (condition, value) => (condition ? value : "");
 
+const createEditors = (sources, parents, updateFactory) => {
+  return {
+    js: new EditorView({
+      doc: sources.js.value,
+      parent: parents.js,
+      extensions: [
+        cmSetup,
+        javascript(),
+        syntaxHighlighting(classHighlighter),
+        EditorView.updateListener.of(updateFactory(sources.js)),
+      ],
+    }),
+    css: new EditorView({
+      doc: sources.css.value,
+      parent: parents.css,
+      extensions: [
+        cmSetup,
+        css(),
+        syntaxHighlighting(classHighlighter),
+        EditorView.updateListener.of(updateFactory(sources.css)),
+      ],
+    }),
+    html: new EditorView({
+      doc: sources.html.value,
+      parent: parents.html,
+      extensions: [
+        cmSetup,
+        html(),
+        syntaxHighlighting(classHighlighter),
+        EditorView.updateListener.of(updateFactory(sources.html)),
+      ],
+    }),
+  };
+};
+
+/*
+create a bin component.
+Options:
+  - `container` (optional Element): will automatically append the bin if provided
+  - `sources`: object with optional `{ js, css, html }` strings of source to put
+             in the corresponding editors
+  - `split`: number from [0, 1] specifying the ratio between the editor and
+           preview panes
+  - `width`: CSS string to override default `--bin-width` value
+  - `height`: CSS string to override default `--bin-height` value
+Returns object with the following fields:
+  - `el`: Element of the outermost HTML element of the bin
+  - `editors`: contains `{ js, css, html }` properties with the CodeMirror
+             instances for each editor tab
+  - `activeTab`: a signal representing the currently active editor tab
+  - `start`: call this function if you did not provide the `container` option
+           after attaching `el` to the DOM
+  - `teardown`: call this if you are removing and destroying the bin to
+              disconnect all listeners
+*/
 export const createBin = ({
   container,
   sources: rawSources,
@@ -94,6 +146,8 @@ export const createBin = ({
   const editorSplit = signal(parseFloat(split) || 0.5);
 
   const teardownFns = [];
+  const stopCapturingEffects = onEffect((fn) => teardownFns.push(fn));
+
   const effect = (...args) => {
     teardownFns.push(_effect(...args));
   };
@@ -150,17 +204,6 @@ export const createBin = ({
       </head>
       <body>
         ${sources.html.value}
-        <script>
-          window.onerror = function (msg, file, line, col, error) {
-            window.top.postMessage({
-              type: 'error',
-              msg: msg,
-              line: line,
-              col: col,
-              stack: error.stack.split('\\n')
-            }, '*');
-          };
-        </script>
         <script type="module" src="${scriptURL.value}"></script>
       </body>
     </html>
@@ -180,27 +223,29 @@ export const createBin = ({
 
   // editor tabs
 
-  const jsEditorEl = _("div", {
-    className: computed(
-      () =>
-        "bin__editor bin__editor--js" +
-        maybe(activeTab.value === "js", " bin__editor--active")
-    ),
-  });
-  const cssEditorEl = _("div", {
-    className: computed(
-      () =>
-        "bin__editor bin__editor--css" +
-        maybe(activeTab.value === "css", " bin__editor--active")
-    ),
-  });
-  const htmlEditorEl = _("div", {
-    className: computed(
-      () =>
-        "bin__editor bin__editor--html" +
-        maybe(activeTab.value === "html", " bin__editor--active")
-    ),
-  });
+  const editorPanes = {
+    js: _("div", {
+      className: computed(
+        () =>
+          "bin__editor bin__editor--js" +
+          maybe(activeTab.value === "js", " bin__editor--active")
+      ),
+    }),
+    css: _("div", {
+      className: computed(
+        () =>
+          "bin__editor bin__editor--css" +
+          maybe(activeTab.value === "css", " bin__editor--active")
+      ),
+    }),
+    html: _("div", {
+      className: computed(
+        () =>
+          "bin__editor bin__editor--html" +
+          maybe(activeTab.value === "html", " bin__editor--active")
+      ),
+    }),
+  };
 
   const tabsForm = _(
     "form",
@@ -212,19 +257,34 @@ export const createBin = ({
     _(
       "label",
       { className: "bin__tab bin__editor_tab" },
-      _("input", { type: "radio", name: "tab", value: "html" }),
+      _("input", {
+        type: "radio",
+        name: "tab",
+        value: "html",
+        checked: computed(() => activeTab.value === "html"),
+      }),
       "html"
     ),
     _(
       "label",
       { className: "bin__tab bin__editor_tab" },
-      _("input", { type: "radio", name: "tab", value: "css" }),
+      _("input", {
+        type: "radio",
+        name: "tab",
+        value: "css",
+        checked: computed(() => activeTab.value === "css"),
+      }),
       "css"
     ),
     _(
       "label",
       { className: "bin__tab bin__editor_tab" },
-      _("input", { type: "radio", name: "tab", value: "js", checked: true }),
+      _("input", {
+        type: "radio",
+        name: "tab",
+        value: "js",
+        checked: computed(() => activeTab.value === "js"),
+      }),
       "javascript"
     ),
     _(
@@ -234,6 +294,7 @@ export const createBin = ({
         type: "radio",
         name: "tab",
         value: "preview",
+        checked: computed(() => activeTab.value === "preview"),
         disabled: computed(() => (isMiniMode.value ? false : true)),
       }),
       "preview",
@@ -243,9 +304,7 @@ export const createBin = ({
           className: "bin__preview__refresh bin__iconbutton",
           title: "reload the preview",
           "aria-label": "reload the preview",
-          onclick: () => {
-            previewEl.value?.contentWindow.location.reload();
-          },
+          onclick: () => reloadPreview(),
         },
         "🔁"
       )
@@ -257,6 +316,12 @@ export const createBin = ({
   });
 
   let previewEl = signal();
+
+  const reloadPreview = () => {
+    if (previewEl.value) {
+      previewEl.value.src = previewURL.value;
+    }
+  };
 
   const binEl = _(
     "div",
@@ -298,9 +363,7 @@ export const createBin = ({
               className: "bin__preview__refresh bin__iconbutton",
               title: "reload the preview",
               "aria-label": "reload the preview",
-              onclick: () => {
-                previewEl.value?.contentWindow.location.reload();
-              },
+              onclick: () => reloadPreview(),
             },
             "🔁"
           )
@@ -318,9 +381,9 @@ export const createBin = ({
           },
         })
       ),
-      jsEditorEl,
-      cssEditorEl,
-      htmlEditorEl,
+      editorPanes.js,
+      editorPanes.css,
+      editorPanes.html,
       resizerEl,
       _("iframe", {
         ref: previewEl,
@@ -338,7 +401,7 @@ export const createBin = ({
   if (width) binEl.style.setProperty("--bin-width", width);
   if (height) binEl.style.setProperty("--bin-height", height);
 
-  // resizing
+  // split resizing
 
   const ilerp = (a, b, i) => (i - a) / (b - a);
   const clamp = (a, b, n) => Math.max(a, Math.min(n, b));
@@ -373,6 +436,7 @@ export const createBin = ({
     updateResize(e);
   });
 
+  // set the split in CSS, factoring in expanded panes
   effect(() => {
     binEl.style.setProperty(
       "--resizer-split",
@@ -393,45 +457,14 @@ export const createBin = ({
 
   // create CM editors
 
-  const update = (s) => (v) => {
+  const updateFactory = (s) => (v) => {
     if (v.docChanged) {
       // how to get the full text content from the editor
       s.value = v.state.doc.toString();
     }
   };
 
-  const editors = {
-    js: new EditorView({
-      doc: sources.js.value,
-      parent: jsEditorEl,
-      extensions: [
-        cmSetup,
-        javascript(),
-        syntaxHighlighting(classHighlighter),
-        EditorView.updateListener.of(update(sources.js)),
-      ],
-    }),
-    css: new EditorView({
-      doc: sources.css.value,
-      parent: cssEditorEl,
-      extensions: [
-        cmSetup,
-        css(),
-        syntaxHighlighting(classHighlighter),
-        EditorView.updateListener.of(update(sources.css)),
-      ],
-    }),
-    html: new EditorView({
-      doc: sources.html.value,
-      parent: htmlEditorEl,
-      extensions: [
-        cmSetup,
-        html(),
-        syntaxHighlighting(classHighlighter),
-        EditorView.updateListener.of(update(sources.html)),
-      ],
-    }),
-  };
+  const editors = createEditors(sources, editorPanes, updateFactory);
 
   // mount bin and start
   const start = () => widthObserver.observe(binEl);
@@ -441,13 +474,8 @@ export const createBin = ({
   }
 
   // destroy / teardown
-  const findEffects = (node) => {
-    if (node._effects) {
-      teardownFns.push(...node._effects);
-    }
-    for (let n of node?.childNodes) findEffects(n);
-  };
-  findEffects(binEl);
+  stopCapturingEffects();
+  console.log(teardownFns);
 
   const teardown = () => {
     while (teardownFns.length) {
