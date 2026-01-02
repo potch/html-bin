@@ -164,7 +164,10 @@ export const createBin = ({
     }
   });
 
-  const isMiniMode = computed(() => !splitMode || actualWidth.value <= 700);
+  const isMiniMode = computed(() => {
+    const w = actualWidth.value;
+    return !splitMode || w <= 700;
+  });
   const resizing = signal(false);
   const splitOverride = signal(
     splitMode && initialTab === "preview" ? 0 : null
