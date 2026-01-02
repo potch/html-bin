@@ -135,6 +135,8 @@ export const createBin = ({
   container,
   sources: rawSources,
   split,
+  initialTab = "js",
+  splitMode = true,
   width,
   height,
 }) => {
@@ -162,11 +164,13 @@ export const createBin = ({
     }
   });
 
-  const isMiniMode = computed(() => actualWidth.value <= 700);
+  const isMiniMode = computed(() => !splitMode || actualWidth.value <= 700);
   const resizing = signal(false);
-  const splitOverride = signal(null);
+  const splitOverride = signal(
+    splitMode && initialTab === "preview" ? 0 : null
+  );
 
-  const activeTab = signal("js");
+  const activeTab = signal(initialTab);
 
   const sources = {
     js: signal(rawSources.js ?? "// js goes here"),
@@ -370,8 +374,16 @@ export const createBin = ({
         ),
         _("button", {
           className: "bin__preview__expand bin__iconbutton",
-          title: "toggle showing only the preview",
-          "aria-label": "toggle showing only the preview",
+          title: computed(() =>
+            splitOverride.value === 0
+              ? "show the code tabs"
+              : "show only the preview"
+          ),
+          "aria-label": computed(() =>
+            splitOverride.value === 0
+              ? "show the code tabs"
+              : "show only the preview"
+          ),
           innerText: computed(() => (splitOverride.value === 0 ? "⏭️" : "↔️")),
           style: computed(() => ({
             order: splitOverride.value === 0 ? -1 : "unset",
@@ -488,6 +500,7 @@ export const createBin = ({
     el: binEl,
     editors,
     activeTab,
+    splitMode,
     start,
     teardown,
   };
