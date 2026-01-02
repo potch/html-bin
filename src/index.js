@@ -134,7 +134,7 @@ Returns object with the following fields:
 export const createBin = ({
   container,
   sources: rawSources,
-  split,
+  split = 0.5,
   initialTab = "js",
   splitMode = true,
   width,
@@ -145,7 +145,7 @@ export const createBin = ({
     document.head.append(injectedStyles);
   }
 
-  const editorSplit = signal(parseFloat(split) || 0.5);
+  const editorSplit = signal(parseFloat(split));
 
   const teardownFns = [];
   const stopCapturingEffects = onEffect((fn) => teardownFns.push(fn));
@@ -453,10 +453,9 @@ export const createBin = ({
 
   // set the split in CSS, factoring in expanded panes
   effect(() => {
-    binEl.style.setProperty(
-      "--resizer-split",
-      splitOverride.value !== null ? splitOverride.value : editorSplit.value
-    );
+    const o = splitOverride.value;
+    const s = editorSplit.value;
+    binEl.style.setProperty("--resizer-split", o !== null ? o : s);
   });
 
   // editor tabs
@@ -490,7 +489,6 @@ export const createBin = ({
 
   // destroy / teardown
   stopCapturingEffects();
-  console.log(teardownFns);
 
   const teardown = () => {
     while (teardownFns.length) {

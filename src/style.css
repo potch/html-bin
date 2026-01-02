@@ -103,6 +103,7 @@
 }
 
 .bin__resizer {
+  user-select: none;
   grid-area: resizer;
   cursor: ew-resize;
   position: relative;
