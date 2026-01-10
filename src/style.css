@@ -33,6 +33,15 @@
   --code-comment: #a3b0d9;
 }
 
+.bin--fullscreen {
+  --bin-width: 100svw !important;
+  --bin-height: 100svh !important;
+  position: fixed;
+  inset: 0;
+  height: 100svh;
+  max-height: 100svh;
+}
+
 .bin__widget {
   position: absolute;
   width: 100%;
@@ -100,6 +109,13 @@
 .bin__editor__expand,
 .bin__preview__expand {
   margin-inline: 0.5rem;
+}
+
+.bin__fullscreen {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  padding: 0.25rem;
 }
 
 .bin__resizer {

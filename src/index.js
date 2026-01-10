@@ -164,6 +164,8 @@ export const createBin = ({
     }
   });
 
+  const isFullScreen = signal(false);
+
   const isMiniMode = computed(() => {
     const w = actualWidth.value;
     return !splitMode || w <= 700;
@@ -337,7 +339,8 @@ export const createBin = ({
         () =>
           "bin" +
           maybe(isMiniMode.value, " bin--mini-mode") +
-          maybe(resizing.value, " bin--resizing")
+          maybe(resizing.value, " bin--resizing") +
+          maybe(isFullScreen.value, " bin--fullscreen")
       ),
     },
     _(
@@ -361,6 +364,21 @@ export const createBin = ({
         "div",
         { className: "bin__menu" },
         _(
+          "button",
+          {
+            className: "bin__preview__expand bin__iconbutton",
+            title: "show the code tabs",
+            "aria-label": "show the code tabs",
+            style: computed(() => ({
+              display: splitOverride.value === 0 ? "block" : "none",
+            })),
+            onclick: () => {
+              splitOverride.value = null;
+            },
+          },
+          "⏭️"
+        ),
+        _(
           "div",
           { className: "bin__tab bin__preview_tab bin__tab--active" },
           "preview",
@@ -375,26 +393,21 @@ export const createBin = ({
             "🔁"
           )
         ),
-        _("button", {
-          className: "bin__preview__expand bin__iconbutton",
-          title: computed(() =>
-            splitOverride.value === 0
-              ? "show the code tabs"
-              : "show only the preview"
-          ),
-          "aria-label": computed(() =>
-            splitOverride.value === 0
-              ? "show the code tabs"
-              : "show only the preview"
-          ),
-          innerText: computed(() => (splitOverride.value === 0 ? "⏭️" : "↔️")),
-          style: computed(() => ({
-            order: splitOverride.value === 0 ? -1 : "unset",
-          })),
-          onclick: () => {
-            splitOverride.value = splitOverride.value === 0 ? null : 0;
+        _(
+          "button",
+          {
+            className: "bin__preview__expand bin__iconbutton",
+            title: "show only the preview",
+            "aria-label": "show only the preview",
+            style: computed(() => ({
+              display: splitOverride.value === 0 ? "none" : "block",
+            })),
+            onclick: () => {
+              splitOverride.value = 0;
+            },
           },
-        })
+          "↔️"
+        )
       ),
       editorPanes.js,
       editorPanes.css,
@@ -410,7 +423,14 @@ export const createBin = ({
         src: previewURL,
       }),
       _("div", { className: "bin__controls" })
-    )
+    ),
+    _("button", {
+      className: "bin__fullscreen bin__iconbutton",
+      title: "toggle fullscreen mode",
+      "aria-label": "toggle fullscreen mode",
+      innerText: computed(() => (isFullScreen.value ? "↖️" : "↘️")),
+      onclick: () => (isFullScreen.value = !isFullScreen.value),
+    })
   );
 
   if (width) binEl.style.setProperty("--bin-width", width);
