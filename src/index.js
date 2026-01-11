@@ -115,12 +115,16 @@ const createEditors = (sources, parents, updateFactory) => {
 create a bin component.
 Options:
   - `container` (optional Element): will automatically append the bin if provided
+  - `extraClasses`: a string of extra CSS classes to append to the bin element
   - `sources`: object with optional `{ js, css, html }` strings of source to put
-             in the corresponding editors
+               in the corresponding editors
   - `split`: number from [0, 1] specifying the ratio between the editor and
-           preview panes
+             preview panes. default is `0.5`.
+  - `splitMode`: (default `true`) whether to have the preview in split screen
+                 with code tabs.
   - `width`: CSS string to override default `--bin-width` value
   - `height`: CSS string to override default `--bin-height` value
+
 Returns object with the following fields:
   - `el`: Element of the outermost HTML element of the bin
   - `editors`: contains `{ js, css, html }` properties with the CodeMirror
@@ -133,6 +137,7 @@ Returns object with the following fields:
 */
 export const createBin = ({
   container,
+  extraClasses = "",
   sources: rawSources,
   split = 0.5,
   initialTab = "js",
@@ -337,7 +342,8 @@ export const createBin = ({
     {
       className: computed(
         () =>
-          "bin" +
+          "bin " +
+          extraClasses +
           maybe(isMiniMode.value, " bin--mini-mode") +
           maybe(resizing.value, " bin--resizing") +
           maybe(isFullScreen.value, " bin--fullscreen")
